@@ -1,7 +1,7 @@
 import tensorflow as tf
 from matplotlib import pyplot as plt
 import numpy as np
-class Chassification():
+class Classification():
     def __init__(self):
         pass
     def get_mnist_fashion_data(self):
@@ -51,5 +51,5 @@ class Chassification():
     def preprocess(self):
         pass
 
-obj = Chassification()
+obj = Classification()
 obj.data_visualization()
