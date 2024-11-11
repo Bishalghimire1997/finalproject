@@ -111,4 +111,4 @@ class Classification():
 obj = Classification()
 obj.data_visualization()
 preprocesse_data_list = obj.preprocessing()
-obj.train(preprocesse_data_list)
+obj.train_model(preprocesse_data_list)
