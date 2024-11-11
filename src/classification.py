@@ -49,7 +49,7 @@ class Classification():
         val_images = data_list[4] 
         val_labels = data_list[5]
         models= tf.keras.models
-        layers=tf.keras,layers
+        layers=tf.keras.layers
         model = models.Sequential()
 
 
@@ -109,6 +109,6 @@ class Classification():
         return  [train_images, train_labels, test_images,test_labels,val_images,val_labels]
 
 obj = Classification()
-obj.data_visualization()
+#obj.data_visualization()
 preprocesse_data_list = obj.preprocessing()
 obj.train_model(preprocesse_data_list)
