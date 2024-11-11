@@ -1,6 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
-from tensorflow.keras.datasets import fashion_mnist
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import os
@@ -43,7 +41,15 @@ class Classification():
         plt.tight_layout() # Adjust layout to prevent labels from overlapping
         plt.show()
 
-    def train_model(self):
+    def train_model(self,data_list):
+        train_images =data_list[0]
+        train_labels = data_list[1]
+        test_images = data_list[2]
+        test_labels = data_list[3]
+        val_images = data_list[4] 
+        val_labels = data_list[5]
+        models= tf.keras.models
+        layers=tf.keras,layers
         model = models.Sequential()
 
 
@@ -92,6 +98,17 @@ class Classification():
         plt.legend()
 
         plt.show()
+        return models
+    def preprocessing(self):
+        (train_images, train_labels), (test_images, test_labels) = self.get_mnist_fashion_data()
+        train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32') / 255
+        test_images = test_images.reshape((test_images.shape[0], 28 * 28)).astype('float32') / 255
+        train_labels = tf.keras.utils.to_categorical(train_labels, 10)
+        test_labels = tf.keras.utils.to_categorical(test_labels, 10)
+        train_images, val_images, train_labels, val_labels = train_test_split(train_images, train_labels, test_size=0.2, random_state=42)
+        return  [train_images, train_labels, test_images,test_labels,val_images,val_labels]
 
 obj = Classification()
 obj.data_visualization()
+preprocesse_data_list = obj.preprocessing()
+obj.train(preprocesse_data_list)
