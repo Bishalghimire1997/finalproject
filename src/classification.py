@@ -1,4 +1,5 @@
 import tensorflow as tf
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import os
@@ -111,4 +112,4 @@ class Classification():
 obj = Classification()
 #obj.data_visualization()
 preprocesse_data_list = obj.preprocessing()
-obj.train_model(preprocesse_data_list)
+model = obj.train_model(preprocesse_data_list)
