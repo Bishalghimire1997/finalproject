@@ -1,5 +1,5 @@
 import tensorflow as tf
-import pandas as pd
+from PIL import Image
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import os
@@ -11,6 +11,27 @@ class Classification():
         fashion_mnist = tf.keras.datasets.fashion_mnist
         (train_images, train_labels),(test_images, test_labels) = fashion_mnist.load_data()
         return (train_images, train_labels),(test_images, test_labels)
+    def convert_to_mnist_format(self, image_path, label):
+        """Converts a single image to the Fashion MNIST format.
+
+        Args:
+            image_path: Path to the image file.
+            label: The corresponding label for the image.
+
+        Returns:
+            A tuple containing the image as a NumPy array and its label.
+            Returns None if the image cannot be processed.
+        """
+        try:
+            img = Image.open(image_path).convert('L')  # Convert to grayscale
+            img = img.resize((28, 28))  # Resize to 28x28 pixels
+            img_array = np.array(img)
+            # Normalize pixel values to the range [0, 1]
+            img_array = img_array / 255.0
+            return img_array, label
+        except (FileNotFoundError, OSError, ValueError):
+            print(f"Error processing image: {image_path}")
+            return None
     def data_visualization(self):
         class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
                'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
@@ -99,7 +120,7 @@ class Classification():
         plt.legend()
 
         plt.show()
-        return models
+        return model
     def preprocessing(self):
         (train_images, train_labels), (test_images, test_labels) = self.get_mnist_fashion_data()
         train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32') / 255
@@ -113,3 +134,9 @@ obj = Classification()
 #obj.data_visualization()
 preprocesse_data_list = obj.preprocessing()
 model = obj.train_model(preprocesse_data_list)
+converted = obj.convert_to_mnist_format("coat.png","coat")
+plt.imshow(converted[0], cmap='gray') # Use cmap='gray' for grayscale images
+plt.title("Converted Image")
+plt.show()
+cl = model.predict(converted[0])
+print("Predicted Class = ", cl)
