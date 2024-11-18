@@ -6,7 +6,8 @@ import os
 import numpy as np
 class Classification():
     def __init__(self):
-        pass
+          self.class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
     def get_mnist_fashion_data(self):
         fashion_mnist = tf.keras.datasets.fashion_mnist
         (train_images, train_labels),(test_images, test_labels) = fashion_mnist.load_data()
@@ -33,8 +34,7 @@ class Classification():
             print(f"Error processing image: {image_path}")
             return None
     def data_visualization(self):
-        class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+       
         (train_images, train_labels),(test_images, test_labels) = self.get_mnist_fashion_data()
         plt.figure(figsize=(10, 10))
         for i in range(25):
@@ -43,7 +43,7 @@ class Classification():
             plt.yticks([])
             plt.grid(False)
             plt.imshow(train_images[i], cmap=plt.cm.binary)
-            plt.xlabel(class_names[train_labels[i]])
+            plt.xlabel(self.class_names[train_labels[i]])
         plt.show()
         print("Shape of the training image:", train_images.shape)
         print("Pixel values range from", np.min(train_images), "to", np.max(train_images))
@@ -59,7 +59,7 @@ class Classification():
         plt.xlabel('Class Labels')
         plt.ylabel('Frequency')
         plt.title('Class Distribution in the Training Set')
-        plt.xticks(unique, class_names, rotation=45, ha='right') # Set x-axis labels to class names
+        plt.xticks(unique, self.class_names, rotation=45, ha='right') # Set x-axis labels to class names
         plt.tight_layout() # Adjust layout to prevent labels from overlapping
         plt.show()
 
@@ -79,9 +79,7 @@ class Classification():
 
 
         model.add(layers.Dense(128, activation='sigmoid'))
-        model.add(layers.Dense(128, activation='sigmoid'))
-        model.add(layers.Dense(128, activation='sigmoid'))
-        model.add(layers.Dense(128, activation='sigmoid'))
+        model.add(layers.Dense(128, activation='relu'))
         model.add(layers.Dense(128, activation='sigmoid'))
 
 
@@ -121,22 +119,41 @@ class Classification():
 
         plt.show()
         return model
+    def predict_image(self,model, image):
+        if image.shape != (28, 28):
+            raise ValueError("Input image must have shape (28, 28)")
+        image_flattened = image.reshape(1, 28 * 28).astype('float32') / 255
+        probabilities = model.predict(image_flattened)
+        predicted_class = np.argmax(probabilities)
+
+        return predicted_class, probabilities[0]
+    def save_model(self,model):
+        model.save('model.h5')
+    def load_model(self):
+        return tf.keras.models.load_model('model.h5')
+    
+    
     def preprocessing(self):
         (train_images, train_labels), (test_images, test_labels) = self.get_mnist_fashion_data()
         train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32') / 255
         test_images = test_images.reshape((test_images.shape[0], 28 * 28)).astype('float32') / 255
         train_labels = tf.keras.utils.to_categorical(train_labels, 10)
+        print(train_labels)
         test_labels = tf.keras.utils.to_categorical(test_labels, 10)
         train_images, val_images, train_labels, val_labels = train_test_split(train_images, train_labels, test_size=0.2, random_state=42)
         return  [train_images, train_labels, test_images,test_labels,val_images,val_labels]
 
 obj = Classification()
 #obj.data_visualization()
-preprocesse_data_list = obj.preprocessing()
-model = obj.train_model(preprocesse_data_list)
-converted = obj.convert_to_mnist_format("coat.png","coat")
+#preprocesse_data_list = obj.preprocessing()
+#model = obj.train_model(preprocesse_data_list)
+#obj.save_model(model)
+model = obj.load_model()
+converted = obj.convert_to_mnist_format("coat1.png","coat")
 plt.imshow(converted[0], cmap='gray') # Use cmap='gray' for grayscale images
 plt.title("Converted Image")
 plt.show()
-cl = model.predict(converted[0])
-print("Predicted Class = ", cl)
+val = obj.predict_image(model,converted[0])
+print(val)
+print(obj.class_names[val[0]])
+
