@@ -1,5 +1,7 @@
 import tensorflow as tf
 from PIL import Image
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from matplotlib import pyplot as plt
 import os
@@ -27,8 +29,8 @@ class Classification():
             img = Image.open(image_path).convert('L')  # Convert to grayscale
             img = img.resize((28, 28))  # Resize to 28x28 pixels
             img_array = np.array(img)
-            # Normalize pixel values to the range [0, 1]
-            img_array = img_array / 255.0
+            img= 255-img_array
+            img_array = np.array(img)
             return img_array, label
         except (FileNotFoundError, OSError, ValueError):
             print(f"Error processing image: {image_path}")
@@ -75,28 +77,21 @@ class Classification():
         model = models.Sequential()
 
 
-        model.add(layers.InputLayer(input_shape=(28*28,)))
+        model.add(layers.InputLayer(input_shape=(28*28)))
 
 
-        model.add(layers.Dense(128, activation='sigmoid'))
-        model.add(layers.Dense(128, activation='relu'))
-        model.add(layers.Dense(128, activation='sigmoid'))
-
-
+        model.add(layers.Dense(16, activation='relu'))
+        model.add(layers.Dense(8, activation='relu'))
         model.add(layers.Dense(10, activation='softmax'))
-
-
         model.compile(optimizer='adam',
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
-
-
         history = model.fit(train_images, train_labels,
                             epochs=11,
                             batch_size=480,
                             validation_data=(val_images, val_labels))
 
-
+        
         test_loss, test_acc = model.evaluate(test_images, test_labels)
         print(f"Test accuracy: {test_acc * 100:.2f}%")
 
@@ -134,23 +129,44 @@ class Classification():
     
     
     def preprocessing(self):
+
         (train_images, train_labels), (test_images, test_labels) = self.get_mnist_fashion_data()
-        train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32') / 255
-        test_images = test_images.reshape((test_images.shape[0], 28 * 28)).astype('float32') / 255
+        train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32')/255
+        test_images = test_images.reshape((test_images.shape[0], 28 * 28)).astype('float32')/255
         train_labels = tf.keras.utils.to_categorical(train_labels, 10)
-        print(train_labels)
         test_labels = tf.keras.utils.to_categorical(test_labels, 10)
         train_images, val_images, train_labels, val_labels = train_test_split(train_images, train_labels, test_size=0.2, random_state=42)
         return  [train_images, train_labels, test_images,test_labels,val_images,val_labels]
+    
+    def plot_confusion_matrix(self, model, test_images, test_labels):
+        # Predict the labels for the test set
+        predictions = model.predict(test_images)
+        predicted_labels = np.argmax(predictions, axis=1)
+        true_labels = np.argmax(test_labels, axis=1)
+
+        # Compute the confusion matrix
+        cm = confusion_matrix(true_labels, predicted_labels)
+
+        # Plot the confusion matrix
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=obj.class_names, yticklabels=obj.class_names)
+        plt.xlabel('Predicted Label')
+        plt.ylabel('True Label')
+        plt.title('Confusion Matrix')
+        plt.show()
+
 
 obj = Classification()
 #obj.data_visualization()
-#preprocesse_data_list = obj.preprocessing()
+preprocesse_data_list = obj.preprocessing()
 #model = obj.train_model(preprocesse_data_list)
 #obj.save_model(model)
 model = obj.load_model()
+obj.plot_confusion_matrix(model,preprocesse_data_list[2],preprocesse_data_list[3])
+
 converted = obj.convert_to_mnist_format("coat1.png","coat")
-plt.imshow(converted[0], cmap='gray') # Use cmap='gray' for grayscale images
+image = converted[0]
+plt.imshow(image,cmap="gray")
 plt.title("Converted Image")
 plt.show()
 val = obj.predict_image(model,converted[0])
