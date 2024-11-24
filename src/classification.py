@@ -14,7 +14,7 @@ class Classification():
         fashion_mnist = tf.keras.datasets.fashion_mnist
         (train_images, train_labels),(test_images, test_labels) = fashion_mnist.load_data()
         return (train_images, train_labels),(test_images, test_labels)
-    def convert_to_mnist_format(self, image_path, label):
+    def convert_to_mnist_format(self, image_path):
         """Converts a single image to the Fashion MNIST format.
 
         Args:
@@ -31,7 +31,7 @@ class Classification():
             img_array = np.array(img)
             img= 255-img_array
             img_array = np.array(img)
-            return img_array, label
+            return img_array
         except (FileNotFoundError, OSError, ValueError):
             print(f"Error processing image: {image_path}")
             return None
@@ -154,6 +154,25 @@ class Classification():
         plt.ylabel('True Label')
         plt.title('Confusion Matrix')
         plt.show()
+    def read_image_from_foder_in_mnist_format(self,path):
+        labels=[]
+        images=[]
+        files_with_extensions = []
+        try:
+            for entry in os.listdir(path):
+                entry_path = os.path.join(path, entry)
+                if os.path.isfile(entry_path):
+                    files_with_extensions.append(entry)
+        except FileNotFoundError:
+            print(f"Error: Directory '{path}' not found.")
+        except PermissionError:
+            print(f"Error: Permission denied for directory '{path}'.")
+        for i in files_with_extensions:
+            images.append(self.convert_to_mnist_format(path+"/"+i))
+            labels.append(path)
+        return images,labels
+
+    
 
 
 obj = Classification()
@@ -162,14 +181,8 @@ preprocesse_data_list = obj.preprocessing()
 #model = obj.train_model(preprocesse_data_list)
 #obj.save_model(model)
 model = obj.load_model()
-obj.plot_confusion_matrix(model,preprocesse_data_list[2],preprocesse_data_list[3])
-
-converted = obj.convert_to_mnist_format("coat1.png","coat")
-image = converted[0]
-plt.imshow(image,cmap="gray")
-plt.title("Converted Image")
-plt.show()
-val = obj.predict_image(model,converted[0])
-print(val)
-print(obj.class_names[val[0]])
+images,labels= obj.read_image_from_foder_in_mnist_format("sneakers")
+for i in images:
+    val, _ = obj.predict_image(model,i)
+    print(obj.class_names[val])
 
