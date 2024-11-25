@@ -1,5 +1,5 @@
 import tensorflow as tf
-from PIL import Image
+from PIL import Image,ImageDraw, ImageFont
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
@@ -78,17 +78,21 @@ class Classification():
 
 
         model.add(layers.InputLayer(input_shape=(28*28)))
-
-
-        model.add(layers.Dense(16, activation='relu'))
-        model.add(layers.Dense(8, activation='relu'))
+        model.add(layers.Dense(500, activation='relu'))
+        model.add(layers.Dropout(0.5))
+        model.add(layers.Dense(250, activation='relu'))
+        model.add(layers.Dropout(0.5))
+        model.add(layers.Dense(100, activation='relu'))
+        model.add(layers.Dropout(0.5))
+        model.add(layers.Dense(50, activation='relu'))
+        model.add(layers.Dropout(0.5))
         model.add(layers.Dense(10, activation='softmax'))
         model.compile(optimizer='adam',
                     loss='categorical_crossentropy',
                     metrics=['accuracy'])
         history = model.fit(train_images, train_labels,
-                            epochs=11,
-                            batch_size=480,
+                            epochs=60,
+                            batch_size=4800,
                             validation_data=(val_images, val_labels))
 
         
@@ -171,6 +175,68 @@ class Classification():
             images.append(self.convert_to_mnist_format(path+"/"+i))
             labels.append(path)
         return images,labels
+    def __add_tag_to_image(self,input_path, output_path, tag_text):
+        """
+        Adds a tag to an image and saves the tagged image.
+
+        :param input_path: Path to the input image.
+        :param output_path: Path to save the tagged image.
+        :param tag_text: The text to use as the tag.
+        """
+        try:
+            # Open the image
+            img = Image.open(input_path).convert("RGBA")
+
+            # Create a transparent overlay
+            txt_overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
+
+            # Draw the tag on the overlay
+            draw = ImageDraw.Draw(txt_overlay)
+            font_size = int(img.size[1] * 0.05)  # Font size relative to image height
+            font = ImageFont.load_default()
+            # Position for the tag (bottom-right corner)
+            text_width, text_height = (100,30)
+            position = (img.size[0] - text_width - 10, img.size[1] - text_height - 10)
+
+            # Add text with a semi-transparent background
+            draw.rectangle(
+                [position, (position[0] + text_width, position[1] + text_height)],
+                fill=(0, 0, 0, 128),
+            )
+            draw.text(position, tag_text, font=font, fill=(255, 255, 255, 255))
+
+            # Merge the overlay with the image
+            watermarked_image = Image.alpha_composite(img, txt_overlay)
+
+            # Save the tagged image
+            watermarked_image.convert("RGB").save(output_path)
+            print(f"Image saved with tag at: {output_path}")
+
+        except FileNotFoundError:
+            print(f"Error: File not found at {input_path}.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    def group(self,path,tag):
+        files_with_extensions=[]
+        try:
+            for entry in os.listdir(path):
+                entry_path = os.path.join(path, entry)
+                if os.path.isfile(entry_path):
+                    files_with_extensions.append(entry)
+        except FileNotFoundError:
+            print(f"Error: Directory '{path}' not found.")
+        except PermissionError:
+            print(f"Error: Permission denied for directory '{path}'.")
+        for i in range (len(files_with_extensions)):
+            print(path+"/"+files_with_extensions[i])
+            self.__add_tag_to_image(path+"/"+files_with_extensions[i],"grouped_images/"+files_with_extensions[i],tag[i])
+
+
+
+        
+
+
+
 
     
 
@@ -180,9 +246,11 @@ obj = Classification()
 preprocesse_data_list = obj.preprocessing()
 #model = obj.train_model(preprocesse_data_list)
 #obj.save_model(model)
+path ="dress"
 model = obj.load_model()
-images,labels= obj.read_image_from_foder_in_mnist_format("sneakers")
+images,labels= obj.read_image_from_foder_in_mnist_format(path)
+tags=[]
 for i in images:
     val, _ = obj.predict_image(model,i)
-    print(obj.class_names[val])
-
+    tags.append(obj.class_names[val])
+obj.group(path,tags)
