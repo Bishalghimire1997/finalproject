@@ -104,14 +104,14 @@ class Classification():
 
         plt.subplot(1, 2, 1)
         plt.plot(history.history['accuracy'], label='Training Accuracy')
-        plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+        plt.plot(history.history['val_accuracy'], label='Test Accuracy')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.legend()
 
         plt.subplot(1, 2, 2)
         plt.plot(history.history['loss'], label='Training Loss')
-        plt.plot(history.history['val_loss'], label='Validation Loss')
+        plt.plot(history.history['val_loss'], label='Test Loss')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.legend()
@@ -135,6 +135,7 @@ class Classification():
     def preprocessing(self):
 
         (train_images, train_labels), (test_images, test_labels) = self.get_mnist_fashion_data()
+        print(test_labels)
         train_images = train_images.reshape((train_images.shape[0], 28 * 28)).astype('float32')/255
         test_images = test_images.reshape((test_images.shape[0], 28 * 28)).astype('float32')/255
         train_labels = tf.keras.utils.to_categorical(train_labels, 10)
@@ -231,14 +232,34 @@ class Classification():
             print(path+"/"+files_with_extensions[i])
             self.__add_tag_to_image(path+"/"+files_with_extensions[i],"grouped_images/"+files_with_extensions[i],tag[i])
 
+    def prepare_data_for_analysis(self):
+        dir = ["ankleboots","bags","coat","pullover","shirt","sneakers","trousers","tshirt,","sandle","dress"]
+        labels = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat','Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+        dir= ["tshirt","trousers","pullover","dress","coat","sandle","shirt","sneakers","bags","ankleboots"]
+        lab = []
+        image = []
+        image_all = []
+        for i in range (len(dir)):
+            im,_ = obj.read_image_from_foder_in_mnist_format(dir[i])
+            im = np.array(im)
+            image.append(im)
+        for i in range(len(image)):
+            for j in image[i]:
+                image_all.append(j)
+                lab.append(i)
+        lab= tf.keras.utils.to_categorical(lab, 10)
 
 
         
 
-
-
-
+        image_all = np.array(image_all)
+        image_all = image_all.reshape(100,28*28)
+        print("")
+        print(np.shape(lab))
+        print("")
+        return image_all,lab
     
+
 
 
 obj = Classification()
@@ -246,11 +267,21 @@ obj = Classification()
 preprocesse_data_list = obj.preprocessing()
 #model = obj.train_model(preprocesse_data_list)
 #obj.save_model(model)
-path ="dress"
+dir = ["ankleboots","bags","coat","pullover","shirt","sneakers","trousers","tshirt,","sandle","dress"]
 model = obj.load_model()
-images,labels= obj.read_image_from_foder_in_mnist_format(path)
-tags=[]
-for i in images:
-    val, _ = obj.predict_image(model,i)
-    tags.append(obj.class_names[val])
-obj.group(path,tags)
+#obj.plot_confusion_matrix(model, preprocesse_data_list[2], preprocesse_data_list[3])
+#new_img,new_lab = obj.prepare_data_for_analysis()
+#obj.plot_confusion_matrix(model,new_img,new_lab)
+
+path ="sandle"
+model = obj.load_model()
+
+
+for j in dir:
+    images,labels= obj.read_image_from_foder_in_mnist_format(j)
+    tags=[]
+
+    for i in images:
+        val, _ = obj.predict_image(model,i)
+        tags.append(obj.class_names[val])
+    obj.group(path,tags)
